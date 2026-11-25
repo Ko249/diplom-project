@@ -5,6 +5,7 @@ import type {
   ThermalStepResult,
 } from './simulation.types.js';
 import {
+  SimulationValidationError,
   validateFiniteNumber,
   validateNonNegativeNumber,
   validatePositiveNumber,
@@ -52,7 +53,9 @@ export function calculateRoomProperties(parameters: RoomParameters): RoomPropert
   validatePositiveNumber(grossWallAreaSquareMeters, 'Расчётная площадь наружных стен');
 
   if (windowAreaSquareMeters > grossWallAreaSquareMeters) {
-    throw new RangeError('windowAreaSquareMeters: площадь окна превышает площадь наружных стен');
+    throw new SimulationValidationError(
+      'windowAreaSquareMeters: площадь окна превышает площадь наружных стен',
+    );
   }
 
   const opaqueWallAreaSquareMeters = grossWallAreaSquareMeters - windowAreaSquareMeters;
@@ -119,7 +122,7 @@ export function calculateThermalStep(input: ThermalStepInput): ThermalStepResult
   validateNonNegativeNumber(heaterPowerWatts, 'heaterPowerWatts');
   validatePositiveNumber(durationSeconds, 'durationSeconds');
   if (heaterControl !== 0 && heaterControl !== 1) {
-    throw new RangeError('heaterControl: ожидается 0 или 1');
+    throw new SimulationValidationError('heaterControl: ожидается 0 или 1');
   }
 
   const heatingPowerWatts = heaterPowerWatts * heaterControl;

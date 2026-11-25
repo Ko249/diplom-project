@@ -1,5 +1,9 @@
 import type { WeatherPoint } from './simulation.types.js';
-import { parseUtcTimestamp, validateTemperature } from './simulation.validation.js';
+import {
+  parseUtcTimestamp,
+  SimulationValidationError,
+  validateTemperature,
+} from './simulation.validation.js';
 
 type TimedTemperature = {
   timeMilliseconds: number;
@@ -8,7 +12,7 @@ type TimedTemperature = {
 
 export function prepareWeather(points: readonly WeatherPoint[]) {
   if (points.length < 2) {
-    throw new RangeError('weather: требуется не менее двух погодных точек');
+    throw new SimulationValidationError('weather: требуется не менее двух погодных точек');
   }
 
   const parsed: TimedTemperature[] = [];
@@ -16,13 +20,15 @@ export function prepareWeather(points: readonly WeatherPoint[]) {
   for (let index = 0; index < points.length; index += 1) {
     const point = points[index];
     if (!point) {
-      throw new RangeError(`weather[${index}]: отсутствует погодная точка`);
+      throw new SimulationValidationError(`weather[${index}]: отсутствует погодная точка`);
     }
 
     const timeMilliseconds = parseUtcTimestamp(point.time, `weather[${index}].time`);
     validateTemperature(point.temperatureCelsius, `weather[${index}].temperatureCelsius`);
     if (previousTime !== undefined && timeMilliseconds <= previousTime) {
-      throw new RangeError(`weather[${index}].time: точки должны строго возрастать без дубликатов`);
+      throw new SimulationValidationError(
+        `weather[${index}].time: точки должны строго возрастать без дубликатов`,
+      );
     }
 
     parsed.push({ timeMilliseconds, temperatureCelsius: point.temperatureCelsius });
@@ -37,7 +43,7 @@ export function prepareWeather(points: readonly WeatherPoint[]) {
     lastTime,
     temperatureAt(timeMilliseconds: number): number {
       if (timeMilliseconds < firstTime || timeMilliseconds > lastTime) {
-        throw new RangeError('Время интерполяции вне интервала погодных данных');
+        throw new SimulationValidationError('Время интерполяции вне интервала погодных данных');
       }
 
       let left = 0;

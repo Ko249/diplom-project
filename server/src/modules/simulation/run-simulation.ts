@@ -7,8 +7,9 @@ import type {
 } from './simulation.types.js';
 import {
   parseUtcTimestamp,
-  toPositiveMilliseconds,
+  SimulationValidationError,
   validateFiniteNumber,
+  validateSimulationTiming,
 } from './simulation.validation.js';
 import { calculateRoomProperties, calculateThermalStep } from './thermal-model.js';
 import { prepareWeather } from './weather-interpolation.js';
@@ -16,25 +17,24 @@ import { prepareWeather } from './weather-interpolation.js';
 export function runSimulation(input: SimulationInput): SimulationResult {
   const { room, initialIndoorTemperatureCelsius, heaterPowerWatts, heaterControl } = input;
   const startTime = parseUtcTimestamp(input.startTime, 'startTime');
-  const duration = toPositiveMilliseconds(input.durationSeconds, 'durationSeconds');
-  const step = toPositiveMilliseconds(input.stepSeconds, 'stepSeconds');
-  if (duration % step !== 0) {
-    throw new RangeError('durationSeconds: продолжительность должна быть кратна шагу stepSeconds');
-  }
-
-  const stepCount = duration / step;
+  const { duration, step, stepCount } = validateSimulationTiming(
+    input.durationSeconds,
+    input.stepSeconds,
+  );
   if (stepCount > maxSimulationSteps) {
-    throw new RangeError(`Количество шагов симуляции превышает лимит ${maxSimulationSteps}`);
+    throw new SimulationValidationError(
+      `Количество шагов симуляции превышает лимит ${maxSimulationSteps}`,
+    );
   }
 
   const endTime = startTime + duration;
   if (!Number.isFinite(new Date(endTime).getTime())) {
-    throw new RangeError('Конец периода симуляции вне диапазона дат UTC');
+    throw new SimulationValidationError('Конец периода симуляции вне диапазона дат UTC');
   }
 
   const weather = prepareWeather(input.weather);
   if (startTime < weather.firstTime || endTime > weather.lastTime) {
-    throw new RangeError(
+    throw new SimulationValidationError(
       'weather: погодные данные должны покрывать весь период, включая его конец',
     );
   }

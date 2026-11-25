@@ -1,5 +1,6 @@
 import express from 'express';
 import { healthRouter } from './modules/health/health.routes.js';
+import { simulationRouter } from './modules/simulation/simulation.routes.js';
 import { weatherRouter } from './modules/weather/weather.routes.js';
 
 const app = express();
@@ -12,6 +13,7 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 
 app.use('/api/health', healthRouter);
 app.use('/api/weather', weatherRouter);
+app.use('/api/simulations', simulationRouter);
 
 app.listen(port, host, (error) => {
   if (error) {

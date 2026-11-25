@@ -39,7 +39,7 @@ function toUtcIso(value: unknown): string {
   return date.toISOString();
 }
 
-function parseWeather(data: unknown, fetchedAt: string): WeatherData {
+function parseWeather(data: unknown, fetchedAt: string, forecastHours: number): WeatherData {
   if (!isRecord(data)) {
     throw new Error('Некорректный формат ответа Open-Meteo');
   }
@@ -86,7 +86,7 @@ function parseWeather(data: unknown, fetchedAt: string): WeatherData {
   if (
     !isUnknownArray(forecastTimes) ||
     !isUnknownArray(forecastTemperatures) ||
-    forecastTimes.length !== weatherConfig.forecastHours ||
+    forecastTimes.length !== forecastHours ||
     forecastTemperatures.length !== forecastTimes.length
   ) {
     throw new Error('Некорректная длина прогноза Open-Meteo');
@@ -121,14 +121,16 @@ function parseWeather(data: unknown, fetchedAt: string): WeatherData {
   };
 }
 
-export async function getWeather(): Promise<WeatherData> {
+export async function getWeather(
+  forecastHours = weatherConfig.forecastHours,
+): Promise<WeatherData> {
   const url = new URL(forecastEndpoint);
   url.search = new URLSearchParams({
     latitude: String(weatherConfig.latitude),
     longitude: String(weatherConfig.longitude),
     current: 'temperature_2m,relative_humidity_2m,wind_speed_10m',
     hourly: 'temperature_2m',
-    forecast_hours: String(weatherConfig.forecastHours),
+    forecast_hours: String(forecastHours),
     temperature_unit: 'celsius',
     wind_speed_unit: 'kmh',
     timezone: 'GMT',
@@ -146,7 +148,7 @@ export async function getWeather(): Promise<WeatherData> {
     }
 
     const data: unknown = await response.json();
-    return parseWeather(data, new Date().toISOString());
+    return parseWeather(data, new Date().toISOString(), forecastHours);
   } catch (error) {
     const code = signal.aborted ? 'WEATHER_UPSTREAM_TIMEOUT' : 'WEATHER_UPSTREAM_ERROR';
     throw new WeatherUpstreamError(code, error);
