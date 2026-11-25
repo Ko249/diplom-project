@@ -1,5 +1,6 @@
 import express from 'express';
 import { healthRouter } from './modules/health/health.routes.js';
+import { weatherRouter } from './modules/weather/weather.routes.js';
 
 const app = express();
 const host = '127.0.0.1';
@@ -10,6 +11,7 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 }
 
 app.use('/api/health', healthRouter);
+app.use('/api/weather', weatherRouter);
 
 app.listen(port, host, (error) => {
   if (error) {

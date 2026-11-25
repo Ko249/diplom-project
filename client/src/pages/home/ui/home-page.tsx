@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { WeatherWidget } from '@/widgets/weather';
 import { getServerHealth } from '../api/get-server-health';
 
 const statusMessages = {
@@ -33,6 +34,7 @@ export function HomePage() {
       <h1>Умный дом</h1>
       <p>Система управления микроклиматом и энергопотреблением.</p>
       <p role="status">{statusMessages[status]}</p>
+      <WeatherWidget />
     </main>
   );
 }
